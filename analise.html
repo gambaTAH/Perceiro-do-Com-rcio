@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Análise de Dados</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #0b1f3a;
+  color: white;
+  margin: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: #08162b;
+}
+
+.logo {
+  height: 50px;
+}
+
+.voltar {
+  margin-left: auto;
+  background: #1e90ff;
+  padding: 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: white;
+}
+
+.container {
+  padding: 20px;
+}
+
+textarea {
+  width: 100%;
+  height: 60px;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  background: #1c3d66;
+  color: white;
+}
+
+button {
+  padding: 10px;
+  background: #1e90ff;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+}
+
+canvas {
+  background: #112b4a;
+  margin-top: 20px;
+  border-radius: 10px;
+}
+
+.resultado {
+  margin-top: 20px;
+  background: #112b4a;
+  padding: 15px;
+  border-radius: 10px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="header">
+  <img src="logo.png" class="logo">
+  <a href="index.html" class="voltar">← Menu</a>
+</div>
+
+<div class="container">
+  <h2>Regressão Linear - Consultoria</h2>
+
+  <label>Volume produzido:</label>
+  <textarea id="x">100,200,300</textarea>
+
+  <label>Custo:</label>
+  <textarea id="y">30,50,70</textarea>
+
+  <button onclick="calcular()">Gerar Análise</button>
+
+  <div class="resultado" id="resultado"></div>
+
+  <canvas id="grafico" width="600" height="300"></canvas>
+</div>
+
+<script>
+function calcular() {
+  let x = document.getElementById("x").value.split(",").map(Number);
+  let y = document.getElementById("y").value.split(",").map(Number);
+
+  let n = x.length;
+
+  let somaX = 0, somaY = 0, somaXY = 0, somaX2 = 0;
+
+  for (let i = 0; i < n; i++) {
+    somaX += x[i];
+    somaY += y[i];
+    somaXY += x[i] * y[i];
+    somaX2 += x[i] * x[i];
+  }
+
+  let b1 = (n * somaXY - somaX * somaY) / (n * somaX2 - somaX * somaX);
+  let b0 = (somaY - b1 * somaX) / n;
+
+  document.getElementById("resultado").innerHTML = `
+    <h3>Resultado</h3>
+    β₀ = ${b0.toFixed(2)}<br>
+    β₁ = ${b1.toFixed(4)}<br><br>
+    Equação: Custo = ${b0.toFixed(2)} + ${b1.toFixed(4)} × Volume
+  `;
+
+  desenharGrafico(x, y, b0, b1);
+}
+
+function desenharGrafico(x, y, b0, b1) {
+  let canvas = document.getElementById("grafico");
+  let ctx = canvas.getContext("2d");
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  let maxX = Math.max(...x);
+  let maxY = Math.max(...y);
+
+  // escala
+  let escalaX = canvas.width / maxX;
+  let escalaY = canvas.height / maxY;
+
+  // pontos
+  ctx.fillStyle = "#4da6ff";
+
+  for (let i = 0; i < x.length; i++) {
+    let px = x[i] * escalaX;
+    let py = canvas.height - y[i] * escalaY;
+
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // linha regressão
+  ctx.strokeStyle = "orange";
+  ctx.beginPath();
+
+  let y0 = b0;
+  let y1 = b0 + b1 * maxX;
+
+  ctx.moveTo(0, canvas.height - y0 * escalaY);
+  ctx.lineTo(maxX * escalaX, canvas.height - y1 * escalaY);
+  ctx.stroke();
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Controle de Atividades</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #0b1f3a;
+  margin: 0;
+  color: white;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  background: #08162b;
+}
+
+.logo {
+  height: 50px;
+}
+
+/* TITULO */
+h1 {
+  text-align: center;
+}
+
+/* FORM */
+.form {
+  margin: 20px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+input, button {
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+}
+
+input {
+  background: #1c3d66;
+  color: white;
+}
+
+button {
+  background: #1e90ff;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #0f6edc;
+}
+
+/* CONTAINER */
+.container {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+}
+
+.coluna {
+  background: #112b4a;
+  padding: 15px;
+  width: 30%;
+  border-radius: 10px;
+}
+
+.coluna h3 {
+  text-align: center;
+}
+
+/* CARDS */
+.card {
+  background: #1c3d66;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 8px;
+}
+
+/* BACKUP */
+.backup {
+  padding: 20px;
+}
+</style>
+
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <img src="logo.png" class="logo">
+  <a href="index.html" class="voltar">← Menu</a>
+</div>
+
+<h1>Controle de Atividades</h1>
+
+<div class="form">
+  <input type="text" id="titulo" placeholder="Título">
+  <input type="date" id="prazo">
+  <button onclick="addTask()">Adicionar</button>
+</div>
+
+<div class="container">
+  <div class="coluna">
+    <h3>Pendentes</h3>
+    <div id="pendente"></div>
+  </div>
+
+  <div class="coluna">
+    <h3>Em andamento</h3>
+    <div id="andamento"></div>
+  </div>
+
+  <div class="coluna">
+    <h3>Concluído</h3>
+    <div id="concluido"></div>
+  </div>
+</div>
+
+<!-- BACKUP -->
+<div class="backup">
+  <button onclick="baixarBackup()">📥 Backup</button>
+  <input type="file" onchange="restaurar(event)">
+</div>
+
+<script>
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+function salvar() {
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function addTask() {
+  const titulo = document.getElementById("titulo").value;
+  const prazo = document.getElementById("prazo").value;
+
+  if (!titulo) return;
+
+  tasks.push({
+    id: Date.now(),
+    titulo,
+    prazo,
+    status: "pendente"
+  });
+
+  salvar();
+  render();
+}
+
+function mudarStatus(id) {
+  const task = tasks.find(t => t.id === id);
+
+  if (task.status === "pendente") task.status = "andamento";
+  else if (task.status === "andamento") task.status = "concluido";
+  else task.status = "pendente";
+
+  salvar();
+  render();
+}
+
+function deletar(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  salvar();
+  render();
+}
+
+function render() {
+  document.getElementById("pendente").innerHTML = "";
+  document.getElementById("andamento").innerHTML = "";
+  document.getElementById("concluido").innerHTML = "";
+
+  tasks.forEach(task => {
+    const div = document.createElement("div");
+    div.className = "card";
+    div.innerHTML = `
+      <strong>${task.titulo}</strong><br>
+      Prazo: ${task.prazo}<br>
+      <button onclick="mudarStatus(${task.id})">Mudar</button>
+      <button onclick="deletar(${task.id})">Excluir</button>
+    `;
+
+    document.getElementById(task.status).appendChild(div);
+  });
+}
+
+function baixarBackup(){
+  const data = JSON.stringify(tasks);
+  const blob = new Blob([data], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "backup.json";
+  a.click();
+}
+
+function restaurar(event){
+  const file = event.target.files[0];
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+    tasks = JSON.parse(e.target.result);
+    salvar();
+    render();
+  };
+
+  reader.readAsText(file);
+}
+
+render();
+</script>
+
+</body>
+</html>

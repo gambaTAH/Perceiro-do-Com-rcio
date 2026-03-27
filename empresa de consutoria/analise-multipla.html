@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Regressão Múltipla</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #0b1f3a;
+  color: white;
+  margin: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: #08162b;
+}
+
+.logo {
+  height: 50px;
+}
+
+.voltar {
+  margin-left: auto;
+  background: #1e90ff;
+  padding: 10px;
+  border-radius: 6px;
+  color: white;
+  text-decoration: none;
+}
+
+.container {
+  padding: 20px;
+}
+
+textarea {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  background: #1c3d66;
+  color: white;
+}
+
+button {
+  padding: 10px;
+  background: #1e90ff;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+}
+
+.resultado {
+  margin-top: 20px;
+  background: #112b4a;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+canvas {
+  margin-top: 20px;
+  background: #112b4a;
+  border-radius: 10px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="header">
+  <img src="logo.png" class="logo">
+  <a href="index.html" class="voltar">← Menu</a>
+</div>
+
+<div class="container">
+  <h2>Regressão Múltipla - Tempo de Entrega</h2>
+
+  <label>Distância (km):</label>
+  <textarea id="dist">10,20,30</textarea>
+
+  <label>Peso (kg):</label>
+  <textarea id="peso">5,10,15</textarea>
+
+  <label>Nº de itens:</label>
+  <textarea id="itens">2,4,6</textarea>
+
+  <label>Tempo real (dias):</label>
+  <textarea id="tempo">3,5,7</textarea>
+
+  <button onclick="calcular()">Gerar Análise</button>
+
+  <div class="resultado" id="resultado"></div>
+
+  <canvas id="grafico" width="700" height="300"></canvas>
+</div>
+
+<script>
+function calcular(){
+  let X1 = dist.value.split(",").map(Number);
+  let X2 = peso.value.split(",").map(Number);
+  let X3 = itens.value.split(",").map(Number);
+  let Y = tempo.value.split(",").map(Number);
+
+  let n = Y.length;
+
+  let media = arr => arr.reduce((a,b)=>a+b)/arr.length;
+
+  let mx1 = media(X1);
+  let mx2 = media(X2);
+  let mx3 = media(X3);
+  let my = media(Y);
+
+  let b1=0,b2=0,b3=0;
+
+  for(let i=0;i<n;i++){
+    b1 += (X1[i]-mx1)*(Y[i]-my);
+    b2 += (X2[i]-mx2)*(Y[i]-my);
+    b3 += (X3[i]-mx3)*(Y[i]-my);
+  }
+
+  b1 /= X1.reduce((a,b)=>a+(b-mx1)**2,0);
+  b2 /= X2.reduce((a,b)=>a+(b-mx2)**2,0);
+  b3 /= X3.reduce((a,b)=>a+(b-mx3)**2,0);
+
+  let b0 = my - b1*mx1 - b2*mx2 - b3*mx3;
+
+  // previsão
+  let previsto = [];
+
+  for(let i=0;i<n;i++){
+    let y = b0 + b1*X1[i] + b2*X2[i] + b3*X3[i];
+    previsto.push(y);
+  }
+
+  resultado.innerHTML = `
+    <h3>Resultado</h3>
+    β₀ = ${b0.toFixed(2)}<br>
+    β₁ (Distância) = ${b1.toFixed(3)}<br>
+    β₂ (Peso) = ${b2.toFixed(3)}<br>
+    β₃ (Itens) = ${b3.toFixed(3)}<br><br>
+
+    <strong>Equação:</strong><br>
+    Tempo = ${b0.toFixed(2)} + ${b1.toFixed(3)}·Dist + ${b2.toFixed(3)}·Peso + ${b3.toFixed(3)}·Itens
+  `;
+
+  desenharGrafico(Y, previsto);
+}
+
+function desenharGrafico(real, previsto){
+  let canvas = document.getElementById("grafico");
+  let ctx = canvas.getContext("2d");
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  let largura = 30;
+  let espacamento = 20;
+
+  let max = Math.max(...real, ...previsto);
+  let escala = 200 / max;
+
+  for(let i=0;i<real.length;i++){
+    let x = i * (largura*2 + espacamento) + 50;
+
+    let hReal = real[i] * escala;
+    let hPrev = previsto[i] * escala;
+
+    // REAL (azul)
+    ctx.fillStyle = "#4da6ff";
+    ctx.fillRect(x, 250 - hReal, largura, hReal);
+
+    // PREVISTO (verde)
+    ctx.fillStyle = "#00cc99";
+    ctx.fillRect(x + largura, 250 - hPrev, largura, hPrev);
+  }
+
+  // legenda
+  ctx.fillStyle = "white";
+  ctx.fillText("Azul = Real", 50, 280);
+  ctx.fillText("Verde = Previsto", 150, 280);
+}
+</script>
+
+</body>
+</html>
